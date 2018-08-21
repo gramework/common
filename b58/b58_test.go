@@ -39,7 +39,7 @@ func TestBase58(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Decode(%s): got error %v, expected %v", b58Vectors[i].encoded, err, b58Vectors[i].bytes)
 		}
-		if bytes.Compare(got, b58Vectors[i].bytes) != 0 {
+		if !bytes.Equal(got, b58Vectors[i].bytes) {
 			t.Fatalf("Decode(%s): got %v, expected %v", b58Vectors[i].encoded, got, b58Vectors[i].bytes)
 		}
 	}

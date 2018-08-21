@@ -40,6 +40,9 @@ type totpInternalState struct {
 	User              string   `json:"u"`
 }
 
+// NewTOTP initializes TOTPState for a user.
+//
+// WARNING: DO NOT reuse TOTPState instance for more then one user!
 func NewTOTP(label, issuer, user string, length ...totpLength) *TOTPState {
 	totp := &TOTPState{}
 	totp.mu = &sync.RWMutex{}
@@ -91,6 +94,7 @@ func (totp *TOTPState) unscaledQR() (barcode.Barcode, error) {
 	return b, err
 }
 
+// QR returns 300x300px QR code image for current TOTP user's secret
 func (totp *TOTPState) QR() (image.Image, error) {
 	b, err := totp.unscaledQR()
 	if err != nil {
@@ -105,6 +109,8 @@ func (totp *TOTPState) QR() (image.Image, error) {
 	return b, nil
 }
 
+// QR returns QR code image for current TOTP user's secret
+// with given width and height
 func (totp *TOTPState) QRScaled(width, height uint16) (image.Image, error) {
 	b, err := totp.unscaledQR()
 	if err != nil {
@@ -118,18 +124,24 @@ func (totp *TOTPState) QRScaled(width, height uint16) (image.Image, error) {
 	return b, nil
 }
 
+// IsValidState checks if current totp instance
+// was loaded correctly
 func (totp *TOTPState) IsValidState() bool {
 	return totp.valid
 }
 
+// Token returns a token for current period
 func (totp *TOTPState) Token() string {
 	return totp.generator.Now().Get()
 }
 
+// Verify verifies given token for current TOTP state
 func (totp *TOTPState) Verify(token string) bool {
 	return totp.generator.Verify(token)
 }
 
+// GetRecoveryPasswords returns a copy of recovery passwords slice
+// to be shown to user when TOTP onboarding succeeded
 func (totp *TOTPState) GetRecoveryPasswords() []string {
 	totp.mu.RLock()
 	rp := make([]string, len(totp.state.RecoveryPasswords))
@@ -138,6 +150,8 @@ func (totp *TOTPState) GetRecoveryPasswords() []string {
 	return rp
 }
 
+// InvalidateRecoveryPassword invalidates given recovery password
+// if it valid and returns if it was valid on invalidation
 func (totp *TOTPState) InvalidateRecoveryPassword(rp string) (wasValid bool) {
 	totp.mu.Lock()
 	for i, pw := range totp.state.RecoveryPasswords {
